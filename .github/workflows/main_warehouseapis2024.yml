@@ -1,5 +1,6 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
+# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
 name: Build and deploy ASP.Net Core app to Azure Web App - WareHouseAPIS2024
 
@@ -11,55 +12,58 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v4
+      - name: Set up Python version
+        uses: actions/setup-python@v5
         with:
-          dotnet-version: '3.1'
+          python-version: '3.12'
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      - name: Create and start virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        
+      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+      - name: Zip artifact for deployment
+        run: zip release.zip ./* -r
 
-      - name: Upload artifact for deployment job
+      - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: python-app
+          path: |
+            release.zip
+            !venv/
 
   deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
-
+    
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_81F05D3747D343B7A4505A89F6FE6D14 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2289A009158649888E9851FE0EB36CA5 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3CE82904C9724D6EB2F66AD937E53574 }}
+          name: python-app
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      - name: Unzip artifact for deployment
+        run: unzip release.zip
+
+      
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
         with:
           app-name: 'WareHouseAPIS2024'
           slot-name: 'Production'
-          package: .
-          
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_475A7374FE9A4A039877756EC7421C08 }}
