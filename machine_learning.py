@@ -1,8 +1,5 @@
 import pandas as pd
-import pickle
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error
 from datetime import datetime
 
 def prepare(data_path_order,data_path_products):
@@ -25,28 +22,22 @@ def prepare(data_path_order,data_path_products):
 
     return x, y, products
 
-def train_and_save_model(x, y, model_path):
+def train_and_save_model(x, y):
     """
-    Trénuje model a ukladá ho do súboru.
+    Trénuje model
     """
 
     # Tréning modelu
     model = RandomForestRegressor()
     model.fit(x, y)
 
-    # Uloženie modelu
-    with open(model_path, 'wb') as f:
-        pickle.dump(model, f)
+    return model
 
-    print(f"Model uložený do {model_path}")
-
-def predict_from_input(model_path):
+def predict_from_input(model):
     """
-    Načíta model a predikuje dátum doručenia na základe vstupov z konzoly.
+    Predikuje dátum doručenia
     """
-    # Načítanie modelu
-    with open(model_path, 'rb') as f:
-        model = pickle.load(f)
+    
 
     # Zadanie testovacích dát cez konzolu
     print("Zadajte údaje pre predikciu:")
@@ -72,18 +63,17 @@ def main():
     Hlavná funkcia na spustenie prípravy dát, trénovania a predikcie.
     """
     # Cesty k súborom
-    #data_path_order = "orders.csv"  # Cesta k datasetu
-    #data_path_products = "product-supplier.csv"  # Cesta k datasetu
-    model_path = "delivery_date_model.pkl"  # Cesta k modelu
+    data_path_order = "orders.csv"  # Cesta k datasetu
+    data_path_products = "product-supplier.csv"  # Cesta k datasetu
 
     # Načítanie a príprava dát
-    #X, y, products = prepare(data_path_order,data_path_products)
+    X, y, products = prepare(data_path_order,data_path_products)
 
     # Trénovanie a ukladanie modelu toto stači spustiť raz pri provom spusteni a potom to hodiť do komentara.
-    #train_and_save_model(X, y, model_path)
+    model = train_and_save_model(X, y)
 
     # Predikcia na základe vstupu z konzoly
-    predict_from_input(model_path)
+    predict_from_input(model)
 
 if __name__ == "__main__":
     main()
