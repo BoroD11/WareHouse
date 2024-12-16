@@ -4,5 +4,5 @@ Flask-Cors
 gunicorn
 pandas
 numpy
-sklearn.ensemble
+scikit-learn
 datetime
